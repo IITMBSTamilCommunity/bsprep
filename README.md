@@ -32,7 +32,7 @@ A comprehensive learning platform for IIT Madras BS students with courses, mento
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
+git clone https://github.com/IITMBSTamilCommunity/bsprep
 cd iitm-bs
 ```
 
@@ -58,9 +58,6 @@ npm run dev
 ## Available Scripts
 
 - `npm run dev` - Start development server (Turbopack)
-- `npm run build` - Build for production
-- `npm start` - Start production server
-- `npm run lint` - Run ESLint
 
 ## Project Structure
 
@@ -95,28 +92,8 @@ npm run dev
 - `/auth/login` - User authentication
 - `/dashboard` - Protected student dashboard
 
-## Features in Detail
 
-### GPA Calculator
-- Calculate course grades based on exam scores
-- Semester GPA calculation with multiple courses
-- Support for Data Science and Electronic Systems programs
 
-### GPA Predictor
-- Predict required final exam scores for target grades
-- Real-time calculations based on current scores
-
-### Support System
-- Contact form for queries (integrated with Google Forms)
-- Feedback form with star ratings (integrated with Google Forms)
-
-## Design System
-
-- **Primary Color:** #3e3098 (Purple)
-- **Accent Color:** #51b206 (Green)
-- **Theme:** Dark mode with glass-morphism effects
-- **Background:** Animated beams with 30% opacity
-- **Typography:** Urbanist font family
 
 ## Contributing
 
@@ -126,6 +103,3 @@ This is a student-driven project. Contributions are welcome!
 
 This platform is independently run by students and is not an official platform of IIT Madras or any IIT institution.
 
-## License
-
-[Add your license here]
