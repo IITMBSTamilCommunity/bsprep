@@ -255,16 +255,3 @@ export default function StudentDashboard() {
     </div>
   )
 }
-          setStats({ totalCourses: 3, inProgress: 2, completed: 1, hoursLearned: 52 })
-        }
-      } catch (error) {
-        console.error("Error fetching enrollments:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchEnrollments()
-  }, [])
-
-  return (

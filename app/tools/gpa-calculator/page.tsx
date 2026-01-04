@@ -133,109 +133,140 @@ export default function GPACalculator() {
 
         {/* Course Grade Calculator */}
         {activeTab === "course" && (
-          <Card className="bg-black/80 backdrop-blur-sm border-0 shadow-2xl max-w-4xl mx-auto">
-            <CardHeader>
-              <CardTitle className="text-2xl">Calculate Course Grade</CardTitle>
+          <Card className="bg-black/80 backdrop-blur-sm border border-slate-800 shadow-2xl max-w-5xl mx-auto">
+            <CardHeader className="border-b border-slate-800 pb-6">
+              <CardTitle className="text-3xl">Calculate Course Grade</CardTitle>
+              <p className="text-slate-400 text-sm mt-2">Select your course and enter your scores</p>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Select Degree</Label>
-                  <Select value={selectedDegree} onValueChange={(v) => {
-                    setSelectedDegree(v as any)
-                    setSelectedLevel("")
-                    setSelectedCourse(null)
-                  }}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Choose degree" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-black border-slate-700">
-                      <SelectItem value="data-science">Data Science</SelectItem>
-                      <SelectItem value="electronic-systems">Electronic Systems</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <CardContent className="space-y-8 pt-8">
+              {/* Course Selection */}
+              <div className="space-y-6">
+                <h3 className="text-lg font-semibold text-[#51b206]">Step 1: Select Course</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Degree Program</Label>
+                    <Select value={selectedDegree} onValueChange={(v) => {
+                      setSelectedDegree(v as any)
+                      setSelectedLevel("")
+                      setSelectedCourse(null)
+                      setCalculatedScore(null)
+                      setCalculatedGrade(null)
+                    }}>
+                      <SelectTrigger className="h-11 bg-white/5 border-slate-700">
+                        <SelectValue placeholder="Choose degree" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black border-slate-700">
+                        <SelectItem value="data-science">Data Science</SelectItem>
+                        <SelectItem value="electronic-systems">Electronic Systems</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Select Level</Label>
-                  <Select value={selectedLevel} onValueChange={(v) => {
-                    setSelectedLevel(v as any)
-                    setSelectedCourse(null)
-                  }} disabled={!selectedDegree}>
-                    <SelectTrigger className="h-12">
-                      <SelectValue placeholder="Choose level" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-black border-slate-700">
-                      {availableLevels.map((level) => (
-                        <SelectItem key={level} value={level}>
-                          {level.charAt(0).toUpperCase() + level.slice(1)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Level</Label>
+                    <Select value={selectedLevel} onValueChange={(v) => {
+                      setSelectedLevel(v as any)
+                      setSelectedCourse(null)
+                      setCalculatedScore(null)
+                      setCalculatedGrade(null)
+                    }} disabled={!selectedDegree}>
+                      <SelectTrigger className="h-11 bg-white/5 border-slate-700">
+                        <SelectValue placeholder="Choose level" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black border-slate-700">
+                        {availableLevels.map((level) => (
+                          <SelectItem key={level} value={level}>
+                            {level.charAt(0).toUpperCase() + level.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              <div className="space-y-2">
-                <Label>Select Course</Label>
-                <Select value={selectedCourse?.id || ""} onValueChange={(id) => {
-                  const course = availableCourses.find((c) => c.id === id)
-                  setSelectedCourse(course || null)
-                  setFormValues({})
-                  setCalculatedScore(null)
-                }} disabled={!selectedLevel}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Choose course" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black border-slate-700">
-                    {availableCourses.map((course) => (
-                      <SelectItem key={course.id} value={course.id}>
-                        {course.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Course</Label>
+                    <Select value={selectedCourse?.id || ""} onValueChange={(id) => {
+                      const course = availableCourses.find((c) => c.id === id)
+                      setSelectedCourse(course || null)
+                      setFormValues({})
+                      setCalculatedScore(null)
+                      setCalculatedGrade(null)
+                    }} disabled={!selectedLevel}>
+                      <SelectTrigger className="h-11 bg-white/5 border-slate-700">
+                        <SelectValue placeholder="Choose course" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-black border-slate-700">
+                        {availableCourses.map((course) => (
+                          <SelectItem key={course.id} value={course.id}>
+                            {course.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
               </div>
 
               {selectedCourse && (
                 <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedCourse.formFields.map((field) => (
-                      <div key={field.id} className="space-y-2">
-                        <Label>{field.label} (Max: {field.max})</Label>
-                        <Input
-                          type="number"
-                          placeholder={`0 - ${field.max}`}
-                          value={formValues[field.id] || ""}
-                          onChange={(e) => {
-                            const val = Math.max(0, Math.min(Number(e.target.value), field.max))
-                            setFormValues({ ...formValues, [field.id]: val })
-                          }}
-                          className="h-12"
-                        />
-                        <p className="text-xs text-slate-500">{field.description}</p>
+                  {/* Score Entry */}
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold text-[#51b206]">Step 2: Enter Your Scores</h3>
+                    <div className="bg-white/5 border border-slate-800 rounded-lg p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {selectedCourse.formFields.map((field) => (
+                          <div key={field.id} className="space-y-2">
+                            <Label className="text-sm font-medium flex justify-between">
+                              <span>{field.label}</span>
+                              <span className="text-slate-500 text-xs">Max: {field.max}</span>
+                            </Label>
+                            <Input
+                              type="number"
+                              placeholder={`Enter score (0 - ${field.max})`}
+                              value={formValues[field.id] || ""}
+                              onChange={(e) => {
+                                const val = Math.max(0, Math.min(Number(e.target.value), field.max))
+                                setFormValues({ ...formValues, [field.id]: val })
+                              }}
+                              className="h-11 bg-black/50 border-slate-700"
+                            />
+                            <p className="text-xs text-slate-500">{field.description}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
 
+                  {/* Actions */}
                   <div className="flex gap-4">
-                    <Button onClick={handleCalculate} className="flex-1 h-12 bg-[#3e3098] hover:bg-[#3e3098]/90">
+                    <Button onClick={handleCalculate} className="flex-1 h-12 bg-[#3e3098] hover:bg-[#3e3098]/90 text-base font-semibold">
+                      <Calculator className="w-5 h-5 mr-2" />
                       Calculate Grade
                     </Button>
                     <Button onClick={() => {
                       setFormValues({})
                       setCalculatedScore(null)
                       setCalculatedGrade(null)
-                    }} variant="outline" className="h-12">
+                    }} variant="outline" className="h-12 px-8 border-slate-700">
                       Reset
                     </Button>
                   </div>
 
+                  {/* Result */}
                   {calculatedScore !== null && calculatedGrade && (
-                    <div className="bg-[#51b206]/10 border border-[#51b206]/50 rounded-lg p-6 text-center">
-                      <p className="text-slate-400 mb-2">Your Score</p>
-                      <p className="text-5xl font-bold text-[#51b206] mb-2">{calculatedScore.toFixed(2)}</p>
-                      <p className="text-2xl">Grade: <span className="text-[#51b206] font-bold">{calculatedGrade}</span></p>
+                    <div className="bg-gradient-to-br from-[#51b206]/20 to-[#3e3098]/20 border border-[#51b206]/50 rounded-xl p-8 text-center">
+                      <p className="text-slate-300 text-sm uppercase tracking-wide mb-3">Your Final Score</p>
+                      <div className="flex items-center justify-center gap-8">
+                        <div>
+                          <p className="text-6xl font-bold text-[#51b206] mb-1">{calculatedScore.toFixed(2)}</p>
+                          <p className="text-slate-400 text-sm">out of 100</p>
+                        </div>
+                        <div className="h-20 w-px bg-slate-700"></div>
+                        <div>
+                          <p className="text-slate-300 text-sm mb-1">Grade</p>
+                          <p className="text-5xl font-bold text-[#51b206]">{calculatedGrade}</p>
+                        </div>
+                      </div>
                     </div>
                   )}
                 </>
@@ -246,88 +277,111 @@ export default function GPACalculator() {
 
         {/* Semester GPA Calculator */}
         {activeTab === "semester" && (
-          <Card className="bg-black/80 backdrop-blur-sm border-0 shadow-2xl max-w-4xl mx-auto">
-            <CardHeader>
-              <CardTitle className="text-2xl">Calculate Semester GPA</CardTitle>
+          <Card className="bg-black/80 backdrop-blur-sm border border-slate-800 shadow-2xl max-w-5xl mx-auto">
+            <CardHeader className="border-b border-slate-800 pb-6">
+              <CardTitle className="text-3xl">Calculate Semester GPA</CardTitle>
+              <p className="text-slate-400 text-sm mt-2">Add your courses and grades to calculate your GPA</p>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {semesterCourses.map((course, index) => (
-                <div key={course.id} className="bg-white/5 p-4 rounded-lg space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Course Name</Label>
+            <CardContent className="space-y-6 pt-8">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 px-4 pb-2 border-b border-slate-800">
+                <div className="col-span-5">
+                  <Label className="text-xs uppercase tracking-wide text-slate-500">Course Name</Label>
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs uppercase tracking-wide text-slate-500">Credits</Label>
+                </div>
+                <div className="col-span-4">
+                  <Label className="text-xs uppercase tracking-wide text-slate-500">Grade</Label>
+                </div>
+                <div className="col-span-1"></div>
+              </div>
+
+              {/* Course Rows */}
+              <div className="space-y-3">
+                {semesterCourses.map((course, index) => (
+                  <div key={course.id} className="grid grid-cols-12 gap-4 p-4 bg-white/5 border border-slate-800 rounded-lg hover:bg-white/10 transition-colors">
+                    <div className="col-span-5">
                       <Input
-                        placeholder="Enter course name"
+                        placeholder="e.g., Mathematics I"
                         value={course.name}
                         onChange={(e) => setSemesterCourses(semesterCourses.map(c => 
                           c.id === course.id ? { ...c, name: e.target.value } : c
                         ))}
-                        className="h-12"
+                        className="h-11 bg-black/50 border-slate-700"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Credits</Label>
+                    <div className="col-span-2">
                       <Input
                         type="number"
-                        placeholder="Credits"
+                        placeholder="4"
                         value={course.credits || ""}
                         onChange={(e) => setSemesterCourses(semesterCourses.map(c => 
                           c.id === course.id ? { ...c, credits: Number(e.target.value) } : c
                         ))}
-                        className="h-12"
+                        className="h-11 bg-black/50 border-slate-700"
+                        min="0"
+                        max="10"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Grade Points</Label>
-                      <div className="flex gap-2">
-                        <Select value={course.gradePoints.toString()} onValueChange={(v) => 
-                          setSemesterCourses(semesterCourses.map(c => 
-                            c.id === course.id ? { ...c, gradePoints: Number(v) } : c
-                          ))
-                        }>
-                          <SelectTrigger className="h-12">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="bg-black border-slate-700">
-                            {gradePointsOptions.map((opt) => (
-                              <SelectItem key={opt.value} value={opt.value.toString()}>{opt.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {semesterCourses.length > 1 && (
-                          <Button onClick={() => removeCourse(course.id)} variant="outline" size="icon" className="h-12 w-12">
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
+                    <div className="col-span-4">
+                      <Select value={course.gradePoints.toString()} onValueChange={(v) => 
+                        setSemesterCourses(semesterCourses.map(c => 
+                          c.id === course.id ? { ...c, gradePoints: Number(v) } : c
+                        ))
+                      }>
+                        <SelectTrigger className="h-11 bg-black/50 border-slate-700">
+                          <SelectValue placeholder="Select grade" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-black border-slate-700">
+                          {gradePointsOptions.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value.toString()}>{opt.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="col-span-1 flex items-center justify-center">
+                      {semesterCourses.length > 1 && (
+                        <Button 
+                          onClick={() => removeCourse(course.id)} 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-11 w-11 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
 
-              <Button onClick={addCourse} variant="outline" className="w-full h-12">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Course
+              <Button onClick={addCourse} variant="outline" className="w-full h-12 border-slate-700 border-dashed hover:border-[#51b206] hover:text-[#51b206]">
+                <Plus className="w-5 h-5 mr-2" />
+                Add Another Course
               </Button>
 
               {semesterGPA !== null && (
-                <div className="bg-[#51b206]/10 border border-[#51b206]/50 rounded-lg p-8 text-center">
-                  <p className="text-slate-400 mb-2">Your Semester GPA</p>
-                  <p className="text-6xl font-bold text-[#51b206] mb-4">{semesterGPA.toFixed(2)}</p>
-                  <div className="grid grid-cols-3 gap-4 mt-6">
-                    <div>
-                      <p className="text-slate-500 text-sm">Courses</p>
-                      <p className="text-2xl font-bold">{semesterCourses.filter(c => c.credits > 0).length}</p>
+                <div className="bg-gradient-to-br from-[#51b206]/20 to-[#3e3098]/20 border border-[#51b206]/50 rounded-xl p-8">
+                  <div className="text-center mb-6">
+                    <p className="text-slate-300 text-sm uppercase tracking-wide mb-3">Your Semester GPA</p>
+                    <p className="text-7xl font-bold text-[#51b206] mb-2">{semesterGPA.toFixed(2)}</p>
+                    <p className="text-xl font-semibold text-[#51b206]">
+                      {semesterGPA >= 9 ? "🌟 Excellent" : semesterGPA >= 8 ? "✨ Very Good" : semesterGPA >= 7 ? "👍 Good" : "📚 Average"}
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-6 pt-6 border-t border-slate-700">
+                    <div className="text-center">
+                      <p className="text-slate-400 text-sm mb-1">Total Courses</p>
+                      <p className="text-3xl font-bold text-white">{semesterCourses.filter(c => c.credits > 0).length}</p>
                     </div>
-                    <div>
-                      <p className="text-slate-500 text-sm">Credits</p>
-                      <p className="text-2xl font-bold">{semesterCourses.filter(c => c.credits > 0).reduce((sum, c) => sum + c.credits, 0)}</p>
+                    <div className="text-center">
+                      <p className="text-slate-400 text-sm mb-1">Total Credits</p>
+                      <p className="text-3xl font-bold text-white">{semesterCourses.filter(c => c.credits > 0).reduce((sum, c) => sum + c.credits, 0)}</p>
                     </div>
-                    <div>
-                      <p className="text-slate-500 text-sm">Performance</p>
-                      <p className="text-xl font-bold text-[#51b206]">
-                        {semesterGPA >= 9 ? "Excellent" : semesterGPA >= 8 ? "Very Good" : semesterGPA >= 7 ? "Good" : "Average"}
-                      </p>
+                    <div className="text-center">
+                      <p className="text-slate-400 text-sm mb-1">Grade Points</p>
+                      <p className="text-3xl font-bold text-white">{(semesterCourses.filter(c => c.credits > 0).reduce((sum, c) => sum + c.credits * c.gradePoints, 0)).toFixed(1)}</p>
                     </div>
                   </div>
                 </div>
