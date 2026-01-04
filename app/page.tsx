@@ -1,13 +1,33 @@
+"use client"
+
 import Link from "next/link"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { StaggerTestimonials } from "@/components/stagger-testimonials"
 import { AnimatedCounter } from "@/components/animated-counter"
-import { BookOpen, Users, TrendingUp, CheckCircle, Zap, Award, ArrowRight } from "lucide-react"
+import { BookOpen, Users, TrendingUp, CheckCircle, Zap, Award, ArrowRight, ChevronDown } from "lucide-react"
 
 export default function HomePage() {
+  const [openFAQ, setOpenFAQ] = useState<number | null>(null)
+
+  const faqs = [
+    {
+      question: "What is BSPrep?",
+      answer: "BSPrep is a community-driven learning platform designed to help IITM BS students prepare better through structured courses, quizzes, and mentor support."
+    },
+    {
+      question: "Is BSPrep officially affiliated with IIT Madras?",
+      answer: "No. BSPrep is not officially affiliated with IIT Madras. It is an independent, student-led initiative."
+    },
+    {
+      question: "How can I contact BSPrep?",
+      answer: "You can contact us through the Support page on the website or by emailing bsprep.team@gmail.com"
+    }
+  ]
+
   return (
     <div className="min-h-screen text-foreground">
       <Navbar isAuthenticated={false} />
@@ -151,6 +171,61 @@ export default function HomePage() {
               <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
             </Button>
           </Link>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="relative py-20 md:py-28 bg-gradient-to-b from-transparent to-slate-50/50 dark:to-slate-900/50">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-5xl font-bold text-slate-900 dark:text-white mb-4">
+              Frequently Asked Questions
+            </h2>
+            <p className="text-slate-600 dark:text-slate-400 text-lg">
+              Everything you need to know about BSPrep
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <div
+                key={index}
+                className="bg-white/5 dark:bg-white/5 backdrop-blur-sm rounded-2xl border border-slate-200/20 dark:border-slate-700/30 overflow-hidden transition-all duration-300 hover:border-slate-300/30 dark:hover:border-slate-600/40"
+              >
+                <button
+                  onClick={() => setOpenFAQ(openFAQ === index ? null : index)}
+                  className="w-full flex items-center justify-between p-6 text-left transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-800/50"
+                >
+                  <h3 className="text-lg md:text-xl font-semibold text-slate-900 dark:text-white pr-8">
+                    {faq.question}
+                  </h3>
+                  <ChevronDown
+                    className={`w-6 h-6 text-slate-600 dark:text-slate-400 flex-shrink-0 transition-transform duration-300 ${
+                      openFAQ === index ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    openFAQ === index ? "max-h-96" : "max-h-0"
+                  }`}
+                >
+                  <div className="px-6 pb-6 text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed">
+                    {faq.answer}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-12 text-center">
+            <p className="text-slate-600 dark:text-slate-400 mb-4">Still have questions?</p>
+            <Link href="/support">
+              <Button className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 px-8 py-4 rounded-full transition-all duration-300 font-medium">
+                Contact Support
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 

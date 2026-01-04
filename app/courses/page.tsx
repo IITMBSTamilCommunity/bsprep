@@ -282,8 +282,8 @@ export default function CoursesPage() {
                   return (
                     <Link
                       key={course.id}
-                      href={isLocked ? "#" : `/courses/${course.id}`}
-                      className={`group ${isLocked ? "cursor-not-allowed" : ""}`}
+                      href={`/courses/${course.id}`}
+                      className="group"
                     >
                       <Card className={`relative bg-black/80 backdrop-blur-sm border-slate-800 hover:border-[#51b206]/50 transition-all duration-300 overflow-hidden h-full ${
                         !isLocked ? "hover:scale-105 hover:shadow-xl hover:shadow-[#51b206]/10" : ""
@@ -299,11 +299,12 @@ export default function CoursesPage() {
                             
                             {/* Overlay for locked courses */}
                             {isLocked && (
-                              <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex items-end justify-center pb-4">
                                 <div className="text-center">
-                                  <Lock className="w-12 h-12 text-slate-400 mx-auto mb-2" />
-                                  <p className="text-white font-semibold">Paid Course</p>
-                                  <p className="text-sm text-slate-400">Coming Soon</p>
+                                  <Badge className="bg-amber-500 text-white font-semibold px-3 py-1">
+                                    <Lock className="w-3 h-3 inline mr-1" />
+                                    Premium Course
+                                  </Badge>
                                 </div>
                               </div>
                             )}

@@ -1,13 +1,15 @@
 "use client"
 
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Play, Clock, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, Play, Clock, CheckCircle2, Lock } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
+import { useEffect, useState } from "react"
 
 // Mock course data with videos
 const courseData: Record<string, any> = {
@@ -115,8 +117,75 @@ const courseData: Record<string, any> = {
 
 export default function CoursePage() {
   const params = useParams()
+  const router = useRouter()
   const courseId = params.courseId as string
   const course = courseData[courseId]
+  const supabase = createClient()
+
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isEnrolled, setIsEnrolled] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [enrolling, setEnrolling] = useState(false)
+
+  useEffect(() => {
+    checkAuth()
+  }, [courseId])
+
+  const checkAuth = async () => {
+    const { data: { user } } = await supabase.auth.getUser()
+    setIsAuthenticated(!!user)
+    
+    if (user) {
+      // Check enrollment from database
+      const { data: enrollment } = await supabase
+        .from('enrollments')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('course_id', courseId)
+        .single()
+      
+      setIsEnrolled(!!enrollment)
+    }
+    setLoading(false)
+  }
+
+  const handleEnroll = async () => {
+    if (!isAuthenticated) {
+      router.push('/auth/login')
+      return
+    }
+
+    setEnrolling(true)
+    
+    try {
+      if (course.type === 'paid') {
+        // Redirect to payment page
+        router.push(`/payment/${courseId}`)
+      } else {
+        // Free course - enroll via API
+        const response = await fetch('/api/enroll', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ courseId })
+        })
+
+        if (response.ok) {
+          alert('Enrolled successfully! This course has been added to My Courses.')
+          setIsEnrolled(true)
+          // Refresh enrollment status
+          checkAuth()
+        } else {
+          const error = await response.json()
+          alert(error.error || 'Failed to enroll')
+        }
+      }
+    } catch (error) {
+      console.error('Enrollment error:', error)
+      alert('Failed to enroll. Please try again.')
+    } finally {
+      setEnrolling(false)
+    }
+  }
 
   if (!course) {
     return (
@@ -142,7 +211,7 @@ export default function CoursePage() {
 
   return (
     <div className="min-h-screen">
-      <Navbar isAuthenticated={false} />
+      <Navbar isAuthenticated={isAuthenticated} />
 
       {/* Course Header */}
       <section className="relative pt-32 pb-12 overflow-hidden">
@@ -152,7 +221,7 @@ export default function CoursePage() {
         
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative">
           <Link 
-            href="/courses"
+            href={isAuthenticated ? "/dashboard/courses" : "/courses"}
             className="inline-flex items-center gap-2 text-slate-400 hover:text-[#51b206] transition-colors mb-8"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -199,9 +268,19 @@ export default function CoursePage() {
                     alt={course.title}
                     className="w-full h-48 object-cover object-left rounded-lg mb-4"
                   />
-                  <Badge className="bg-[#51b206] hover:bg-[#51b206] text-white font-semibold w-full justify-center py-2">
-                    FREE COURSE
-                  </Badge>
+                  {isEnrolled ? (
+                    <Badge className="bg-[#51b206] hover:bg-[#51b206] text-white font-semibold w-full justify-center py-2">
+                      ✓ ENROLLED
+                    </Badge>
+                  ) : (
+                    <Button 
+                      onClick={handleEnroll}
+                      disabled={loading || enrolling}
+                      className="w-full bg-[#3e3098] hover:bg-[#3e3098]/90 text-white font-semibold py-6"
+                    >
+                      {enrolling ? 'Enrolling...' : course.type === 'paid' ? 'Enroll Now - Premium' : 'Enroll Now - Free'}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -215,42 +294,135 @@ export default function CoursePage() {
           <h2 className="text-3xl font-bold text-white mb-8">Course Content</h2>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {course.videos.map((video: any, index: number) => (
-              <Link
-                key={index}
-                href={`/courses/${courseId}/week-${video.week}`}
-                className="group"
-              >
-                <Card className="bg-black/80 backdrop-blur-sm border-slate-800 hover:border-[#51b206]/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#51b206]/10">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-16 h-16 bg-[#51b206]/20 rounded-lg flex items-center justify-center group-hover:bg-[#51b206]/30 transition-colors">
-                        <Play className="w-8 h-8 text-[#51b206]" fill="#51b206" />
-                      </div>
+            {Array.from({ length: course.weeks }, (_, i) => i + 1).map((weekNum) => {
+              const weekVideos = course.videos.filter((v: any) => v.week === weekNum)
+              const hasContent = weekVideos.length > 0
 
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Badge className="bg-slate-700 text-slate-300 hover:bg-slate-700">
-                            Week {video.week}
-                          </Badge>
-                          <span className="text-sm text-slate-500">{video.duration}</span>
+              return (
+                <div key={weekNum} className="group">
+                  {!isAuthenticated ? (
+                    <Card className="bg-black/80 backdrop-blur-sm border-slate-800">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 w-16 h-16 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                            <Lock className="w-8 h-8 text-slate-400" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className="bg-slate-700 text-slate-300">
+                                Week {weekNum}
+                              </Badge>
+                            </div>
+
+                            <h3 className="text-lg font-bold text-white mb-2">
+                              {hasContent ? weekVideos[0]?.title.split(' - ')[0] : `Week ${weekNum}`}
+                            </h3>
+
+                            <p className="text-sm text-slate-400 mb-3">
+                              {hasContent ? weekVideos[0]?.description : 'Course content and materials'}
+                            </p>
+
+                            <p className="text-xs text-[#3e3098] font-medium">
+                              Sign in to access content
+                            </p>
+                          </div>
+
+                          <Lock className="w-5 h-5 text-slate-500 flex-shrink-0" />
                         </div>
+                      </CardContent>
+                    </Card>
+                  ) : !isEnrolled ? (
+                    <Card className="bg-black/80 backdrop-blur-sm border-slate-800 opacity-60">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 w-16 h-16 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                            <Lock className="w-8 h-8 text-slate-500" />
+                          </div>
 
-                        <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#51b206] transition-colors">
-                          {video.title}
-                        </h3>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className="bg-slate-700 text-slate-300">
+                                Week {weekNum}
+                              </Badge>
+                            </div>
 
-                        <p className="text-sm text-slate-400 line-clamp-2">
-                          {video.description}
-                        </p>
-                      </div>
+                            <h3 className="text-lg font-bold text-slate-400 mb-2">
+                              Week {weekNum} Content
+                            </h3>
 
-                      <CheckCircle2 className="w-5 h-5 text-slate-700 flex-shrink-0" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                            <p className="text-sm text-slate-500">
+                              Enroll to access this content
+                            </p>
+                          </div>
+
+                          <Lock className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ) : hasContent ? (
+                    <Link href={`/courses/${courseId}/week-${weekNum}`}>
+                      <Card className="bg-black/80 backdrop-blur-sm border-slate-800 hover:border-[#51b206]/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#51b206]/10">
+                        <CardContent className="p-6">
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 w-16 h-16 bg-[#51b206]/20 rounded-lg flex items-center justify-center group-hover:bg-[#51b206]/30 transition-colors">
+                              <Play className="w-8 h-8 text-[#51b206]" fill="#51b206" />
+                            </div>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge className="bg-slate-700 text-slate-300 hover:bg-slate-700">
+                                  Week {weekNum}
+                                </Badge>
+                                <span className="text-sm text-slate-500">{weekVideos.length} videos</span>
+                              </div>
+
+                              <h3 className="text-lg font-bold text-white mb-2 group-hover:text-[#51b206] transition-colors">
+                                Week {weekNum} - {weekVideos[0]?.title || 'Content'}
+                              </h3>
+
+                              <p className="text-sm text-slate-400 line-clamp-2">
+                                {weekVideos[0]?.description || 'Course materials and videos'}
+                              </p>
+                            </div>
+
+                            <CheckCircle2 className="w-5 h-5 text-slate-700 flex-shrink-0" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ) : (
+                    <Card className="bg-black/80 backdrop-blur-sm border-slate-800">
+                      <CardContent className="p-6">
+                        <div className="flex items-start gap-4">
+                          <div className="flex-shrink-0 w-16 h-16 bg-slate-700/50 rounded-lg flex items-center justify-center">
+                            <Play className="w-8 h-8 text-slate-500" />
+                          </div>
+
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className="bg-slate-700 text-slate-300">
+                                Week {weekNum}
+                              </Badge>
+                            </div>
+
+                            <h3 className="text-lg font-bold text-slate-400 mb-2">
+                              Week {weekNum} Content
+                            </h3>
+
+                            <p className="text-sm text-slate-500">
+                              Enroll to access this content
+                            </p>
+                          </div>
+
+                          <CheckCircle2 className="w-5 h-5 text-slate-700 flex-shrink-0" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>

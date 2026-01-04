@@ -1,257 +1,150 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { useEffect, useState } from "react"
-import { BarChart, Users, UserPlus, UserCheck, FileText, Phone, TrendingUp, Calendar } from "lucide-react"
-
-interface DashboardStats {
-  totalEmployees: number
-  newEmployees: number
-  resignedEmployees: number
-  jobApplicants: number
-  vacanciesChange: string
-  candidatesChange: string
-}
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { BookOpen, Trophy, Users, TrendingUp } from "lucide-react"
 
 export default function StudentDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalEmployees: 418,
-    newEmployees: 21,
-    resignedEmployees: 14,
-    jobApplicants: 261,
-    vacanciesChange: "+7%",
-    candidatesChange: "+4%",
-  })
-  const [userName, setUserName] = useState("Maria")
+  const [userName, setUserName] = useState("")
+  const [enrolledCoursesCount, setEnrolledCoursesCount] = useState(0)
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
+        const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           setUserName(user.email?.split("@")[0] || "Student")
+          
+          // Get enrolled courses count
+          const { data: enrollments } = await supabase
+            .from('enrollments')
+            .select('id')
+            .eq('user_id', user.id)
+          
+          setEnrolledCoursesCount(enrollments?.length || 0)
         }
       } catch (error) {
         console.error("Error fetching user:", error)
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchUserData()
   }, [])
 
-  const countries = [
-    { name: "United States", percentage: 78, flag: "🇺🇸" },
-    { name: "France", percentage: 43, flag: "🇫🇷" },
-    { name: "Japan", percentage: 38, flag: "🇯🇵" },
-    { name: "Sweden", percentage: 24, flag: "🇸🇪" },
-    { name: "Spain", percentage: 16, flag: "🇪🇸" },
-  ]
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3e3098]"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              Good morning, <span className="text-primary">{userName}</span>
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">long time no see</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              Schedule
-            </Button>
-            <Button size="sm">
-              Analytics
-            </Button>
-            <Button variant="outline" size="sm">
-              Candidates
-            </Button>
-            <Button variant="outline" size="sm">
-              KPI
-            </Button>
-            <Button variant="outline" size="sm">
-              Leads
-            </Button>
-          </div>
-        </div>
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <div>
+        <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
+          Welcome back, {userName}!
+        </h1>
+        <p className="text-slate-600 dark:text-slate-400">
+          Continue your learning journey with IITM BS courses
+        </p>
+      </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <Users className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <CardDescription className="text-sm">Total employees</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold">{stats.totalEmployees}</h3>
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">{stats.vacanciesChange} last month</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <UserPlus className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <CardDescription className="text-sm">New employees</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold">{stats.newEmployees}</h3>
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">{stats.vacanciesChange} last month</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <UserCheck className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <CardDescription className="text-sm">Resigned employees</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold">{stats.resignedEmployees}</h3>
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">{stats.candidatesChange} last month</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <FileText className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <CardDescription className="text-sm">Job applicants</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold">{stats.jobApplicants}</h3>
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">+12% last month</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Lower Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Upcoming Interview */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Upcoming Interview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  <span className="text-xl">👤</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Front-End Developer</p>
-                  <p className="text-sm text-muted-foreground">Jordan Maxcon</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">Time</p>
-                  <p className="text-sm text-muted-foreground">11:30 AM - 12:45 AM</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge>PayPal</Badge>
-                  <Button size="sm" className="rounded-full w-10 h-10 p-0">
-                    <Phone className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    View details
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Vacancy Trends Chart */}
-          <Card className="border shadow-sm lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold">Vacancy Trends</CardTitle>
-                <div className="flex gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-primary"></div>
-                    <span className="text-muted-foreground">vacancies</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                    <span className="text-muted-foreground">candidates</span>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-48 relative">
-                {/* Simple chart representation */}
-                <div className="absolute inset-0 flex items-end justify-between px-4 pb-4">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                      <div className="w-full max-w-[20px] space-y-1">
-                        <div
-                          className="w-full bg-primary rounded-t"
-                          style={{ height: `${Math.random() * 80 + 40}px` }}
-                        ></div>
-                        <div
-                          className="w-full bg-red-400 rounded-t"
-                          style={{ height: `${Math.random() * 60 + 30}px` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* Highlight marker */}
-                <div className="absolute left-1/2 top-8 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
-                  65.03
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Countries Insight */}
-        <Card className="border shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Countries Insight</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {countries.map((country, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <span className="text-2xl">{country.flag}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium">{country.name}</span>
-                      <span className="text-sm font-semibold">{country.percentage}%</span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ width: `${country.percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-6 hover:shadow-lg transition-shadow">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-[#3e3098]/10 rounded-lg">
+              <BookOpen className="w-6 h-6 text-[#3e3098]" />
             </div>
-          </CardContent>
+            <div>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Enrolled Courses</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">{enrolledCoursesCount}</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 hover:shadow-lg transition-shadow">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-[#51b206]/10 rounded-lg">
+              <Trophy className="w-6 h-6 text-[#51b206]" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Completed</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">0</p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6 hover:shadow-lg transition-shadow">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-blue-500/10 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Progress</p>
+              <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                {enrolledCoursesCount > 0 ? '25%' : '0%'}
+              </p>
+            </div>
+          </div>
         </Card>
       </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <Link href="/dashboard/courses">
+            <Card className="p-6 hover:shadow-lg hover:border-[#3e3098] transition-all cursor-pointer group">
+              <BookOpen className="w-8 h-8 text-[#3e3098] mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-1">My Courses</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">View and continue your enrolled courses</p>
+            </Card>
+          </Link>
+
+          <Link href="/dashboard/courses">
+            <Card className="p-6 hover:shadow-lg hover:border-[#51b206] transition-all cursor-pointer group">
+              <Users className="w-8 h-8 text-[#51b206] mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-1">Explore Courses</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Discover new courses to enroll in</p>
+            </Card>
+          </Link>
+
+          <Link href="/dashboard/profile">
+            <Card className="p-6 hover:shadow-lg hover:border-blue-500 transition-all cursor-pointer group">
+              <Users className="w-8 h-8 text-blue-500 mb-3 group-hover:scale-110 transition-transform" />
+              <h3 className="font-semibold text-slate-900 dark:text-white mb-1">My Profile</h3>
+              <p className="text-sm text-slate-600 dark:text-slate-400">Update your profile and settings</p>
+            </Card>
+          </Link>
+        </div>
+      </div>
+
+      {/* Welcome Message for New Users */}
+      {enrolledCoursesCount === 0 && (
+        <Card className="p-8 bg-gradient-to-br from-[#3e3098]/10 to-[#51b206]/10 border-[#3e3098]">
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            🎉 Welcome to BSPrep!
+          </h2>
+          <p className="text-slate-600 dark:text-slate-400 mb-6">
+            Start your IITM BS journey by exploring our courses. Enroll in free qualifier courses or upgrade to foundation level courses.
+          </p>
+          <Link href="/dashboard/courses">
+            <Button className="bg-[#3e3098] hover:bg-[#3e3098]/90 text-white">
+              Browse Courses
+            </Button>
+          </Link>
+        </Card>
+      )}
     </div>
   )
 }

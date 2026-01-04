@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { AnimatedBackground } from "@/components/animated-background"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,8 +11,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MessageSquare, Star, Send, MessageCircle } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function SupportPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
   // Contact Form State
   const [contactForm, setContactForm] = useState({
     fullName: "",
@@ -33,6 +39,13 @@ export default function SupportPage() {
   })
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSuccess, setFeedbackSuccess] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsAuthenticated(!!data.user)
+      setLoading(false)
+    })
+  }, [])
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,14 +151,19 @@ export default function SupportPage() {
     }
   }
 
+  if (loading) {
+    return null
+  }
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-black">
-      <Navbar isAuthenticated={false} />
+    <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-black relative">
+      <AnimatedBackground />
+      <Navbar isAuthenticated={isAuthenticated} />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-[#3e3098]/5 to-transparent"></div>
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
           <div className="text-center mb-12">
             <h1 className="text-5xl md:text-6xl font-bold mb-6">
               <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
@@ -160,7 +178,7 @@ export default function SupportPage() {
       </section>
 
       {/* Forms Section */}
-      <section className="pb-20">
+      <section className="pb-20 relative z-10">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             

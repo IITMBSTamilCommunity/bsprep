@@ -31,7 +31,8 @@ export default function LoginPage() {
         password,
       })
       if (error) throw error
-      router.push("/dashboard")
+      // Redirect to dashboard and force reload to update navbar
+      window.location.href = "/dashboard"
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
