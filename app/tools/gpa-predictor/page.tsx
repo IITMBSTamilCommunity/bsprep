@@ -97,129 +97,218 @@ export default function GPAPredictor() {
           <p className="text-slate-400 text-lg">Predict what you need in your final exam</p>
         </div>
 
-        <Card className="bg-black/80 backdrop-blur-sm border-0 shadow-2xl max-w-4xl mx-auto">
-          <CardHeader>
-            <CardTitle className="text-2xl">Predict Your Required Scores</CardTitle>
+        <Card className="bg-black/80 backdrop-blur-sm border border-slate-800 shadow-2xl max-w-5xl mx-auto">
+          <CardHeader className="border-b border-slate-800 pb-6">
+            <CardTitle className="text-3xl">Predict Your Required Scores</CardTitle>
+            <p className="text-slate-400 text-sm mt-2">Find out what you need in your final exam to achieve your target grade</p>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-2">
-                <Label>Select Degree</Label>
-                <Select value={selectedDegree} onValueChange={(v) => {
-                  setSelectedDegree(v as any)
-                  setSelectedLevel("")
-                  setSelectedCourse(null)
-                  setPredictions([])
-                }}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Choose degree" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black border-slate-700">
-                    <SelectItem value="data-science">Data Science</SelectItem>
-                    <SelectItem value="electronic-systems">Electronic Systems</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <CardContent className="space-y-8 pt-8">
+            {/* Course Selection */}
+            <div className="space-y-6">
+              <h3 className="text-lg font-semibold text-[#51b206]">Step 1: Select Course</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Degree Program</Label>
+                  <Select value={selectedDegree} onValueChange={(v) => {
+                    setSelectedDegree(v as any)
+                    setSelectedLevel("")
+                    setSelectedCourse(null)
+                    setPredictions([])
+                  }}>
+                    <SelectTrigger className="h-11 bg-white/5 border-slate-700">
+                      <SelectValue placeholder="Choose degree" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-black border-slate-700">
+                      <SelectItem value="data-science">Data Science</SelectItem>
+                      <SelectItem value="electronic-systems">Electronic Systems</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="space-y-2">
-                <Label>Select Level</Label>
-                <Select value={selectedLevel} onValueChange={(v) => {
-                  setSelectedLevel(v as any)
-                  setSelectedCourse(null)
-                  setPredictions([])
-                }} disabled={!selectedDegree}>
-                  <SelectTrigger className="h-12">
-                    <SelectValue placeholder="Choose level" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-black border-slate-700">
-                    {availableLevels.map((level) => (
-                      <SelectItem key={level} value={level}>
-                        {level.charAt(0).toUpperCase() + level.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Level</Label>
+                  <Select value={selectedLevel} onValueChange={(v) => {
+                    setSelectedLevel(v as any)
+                    setSelectedCourse(null)
+                    setPredictions([])
+                  }} disabled={!selectedDegree}>
+                    <SelectTrigger className="h-11 bg-white/5 border-slate-700">
+                      <SelectValue placeholder="Choose level" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-black border-slate-700">
+                      {availableLevels.map((level) => (
+                        <SelectItem key={level} value={level}>
+                          {level.charAt(0).toUpperCase() + level.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="space-y-2">
-              <Label>Select Course</Label>
-              <Select value={selectedCourse?.id || ""} onValueChange={(id) => {
-                const course = availableCourses.find((c) => c.id === id)
-                setSelectedCourse(course || null)
-                setFormValues({})
-                setPredictions([])
-              }} disabled={!selectedLevel}>
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Choose course" />
-                </SelectTrigger>
-                <SelectContent className="bg-black border-slate-700">
-                  {availableCourses.map((course) => (
-                    <SelectItem key={course.id} value={course.id}>
-                      {course.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Course</Label>
+                  <Select value={selectedCourse?.id || ""} onValueChange={(id) => {
+                    const course = availableCourses.find((c) => c.id === id)
+                    setSelectedCourse(course || null)
+                    setFormValues({})
+                    setPredictions([])
+                  }} disabled={!selectedLevel}>
+                    <SelectTrigger className="h-11 bg-white/5 border-slate-700">
+                      <SelectValue placeholder="Choose course" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-black border-slate-700">
+                      {availableCourses.map((course) => (
+                        <SelectItem key={course.id} value={course.id}>
+                          {course.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
 
             {selectedCourse && (
               <>
-                <div className="bg-white/5 p-4 rounded-lg">
-                  <p className="text-sm text-slate-400 mb-4">Enter your current scores (excluding final exam):</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {selectedCourse.formFields.filter(f => f.id !== 'F').map((field) => (
-                      <div key={field.id} className="space-y-2">
-                        <Label>{field.label} (Max: {field.max})</Label>
-                        <Input
-                          type="number"
-                          placeholder={`0 - ${field.max}`}
-                          value={formValues[field.id] || ""}
-                          onChange={(e) => {
-                            const val = Math.max(0, Math.min(Number(e.target.value), field.max))
-                            setFormValues({ ...formValues, [field.id]: val })
-                          }}
-                          className="h-12"
-                        />
-                      </div>
-                    ))}
+                {/* Score Entry */}
+                <div className="space-y-6">
+                  <h3 className="text-lg font-semibold text-[#51b206]">Step 2: Enter Current Scores</h3>
+                  <div className="bg-white/5 border border-slate-800 rounded-lg p-6">
+                    <p className="text-sm text-slate-400 mb-4">Enter all your scores excluding the final exam (F):</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {selectedCourse.formFields.filter(f => f.id !== 'F').map((field) => (
+                        <div key={field.id} className="space-y-2">
+                          <Label className="text-sm font-medium flex justify-between">
+                            <span>{field.label}</span>
+                            <span className="text-slate-500 text-xs">Max: {field.max}</span>
+                          </Label>
+                          <Input
+                            type="number"
+                            placeholder={`Enter score (0 - ${field.max})`}
+                            value={formValues[field.id] || ""}
+                            onChange={(e) => {
+                              const val = Math.max(0, Math.min(Number(e.target.value), field.max))
+                              setFormValues({ ...formValues, [field.id]: val })
+                            }}
+                            className="h-11 bg-black/50 border-slate-700"
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <Button onClick={handlePredict} className="w-full h-12 bg-[#51b206] hover:bg-[#51b206]/90">
+                {/* Predict Button */}
+                <Button onClick={handlePredict} className="w-full h-12 bg-[#51b206] hover:bg-[#51b206]/90 text-base font-semibold">
+                  <TrendingUp className="w-5 h-5 mr-2" />
                   Predict Required Scores
                 </Button>
 
                 {predictions.length > 0 && (
-                  <div className="space-y-3">
-                    <h3 className="text-xl font-bold text-center mb-4">Required Final Exam Scores</h3>
-                    {predictions.map((pred) => (
-                      <div
-                        key={pred.grade}
-                        className={`p-4 rounded-lg border ${
-                          pred.possible
-                            ? "bg-[#51b206]/10 border-[#51b206]/50"
-                            : "bg-red-500/10 border-red-500/50"
-                        }`}
-                      >
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <span className="text-2xl font-bold">Grade {pred.grade}</span>
-                            <span className="text-slate-400 ml-2">({pred.gradePoints} points)</span>
-                          </div>
-                          <div className="text-right">
-                            {pred.possible ? (
-                              <>
-                                <p className="text-sm text-slate-400">Required in Final:</p>
-                                <p className="text-3xl font-bold text-[#51b206]">{pred.requiredScore.toFixed(1)}%</p>
-                              </>
-                            ) : (
-                              <p className="text-red-400 font-semibold">Not Achievable</p>
-                            )}
-                          </div>
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <h3 className="text-2xl font-bold mb-2">Required Final Exam Scores</h3>
+                      <p className="text-slate-400 text-sm">Based on your current scores, here's what you need in the final exam</p>
+                    </div>
+                    
+                    {/* Table */}
+                    <div className="overflow-hidden rounded-xl border border-slate-800">
+                      {/* Table Header */}
+                      <div className="grid grid-cols-4 gap-4 bg-gradient-to-r from-[#3e3098] to-[#51b206] p-4">
+                        <div className="text-center">
+                          <p className="text-white font-bold text-sm uppercase tracking-wide">Target Grade</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-white font-bold text-sm uppercase tracking-wide">Grade Points</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-white font-bold text-sm uppercase tracking-wide">Required Score</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-white font-bold text-sm uppercase tracking-wide">Status</p>
                         </div>
                       </div>
-                    ))}
+                      
+                      {/* Table Rows */}
+                      <div className="bg-black/50">
+                        {predictions.map((pred, index) => (
+                          <div
+                            key={pred.grade}
+                            className={`grid grid-cols-4 gap-4 p-4 border-b border-slate-800 hover:bg-white/5 transition-colors ${
+                              index === predictions.length - 1 ? 'border-b-0' : ''
+                            }`}
+                          >
+                            <div className="text-center flex items-center justify-center">
+                              <span className="text-3xl font-bold text-white">{pred.grade}</span>
+                            </div>
+                            <div className="text-center flex items-center justify-center">
+                              <div>
+                                <p className="text-2xl font-bold text-slate-300">{pred.gradePoints}</p>
+                                <p className="text-xs text-slate-500">points</p>
+                              </div>
+                            </div>
+                            <div className="text-center flex items-center justify-center">
+                              {pred.possible ? (
+                                <div>
+                                  <p className="text-3xl font-bold text-[#51b206]">{pred.requiredScore.toFixed(1)}%</p>
+                                  <p className="text-xs text-slate-400">out of 100</p>
+                                </div>
+                              ) : (
+                                <p className="text-lg font-semibold text-slate-600">---</p>
+                              )}
+                            </div>
+                            <div className="text-center flex items-center justify-center">
+                              {pred.possible ? (
+                                pred.requiredScore <= 40 ? (
+                                  <span className="px-4 py-2 bg-[#51b206]/20 border border-[#51b206]/50 text-[#51b206] rounded-full text-sm font-semibold">
+                                    ✓ Easy
+                                  </span>
+                                ) : pred.requiredScore <= 70 ? (
+                                  <span className="px-4 py-2 bg-yellow-500/20 border border-yellow-500/50 text-yellow-500 rounded-full text-sm font-semibold">
+                                    ⚡ Moderate
+                                  </span>
+                                ) : pred.requiredScore <= 90 ? (
+                                  <span className="px-4 py-2 bg-orange-500/20 border border-orange-500/50 text-orange-500 rounded-full text-sm font-semibold">
+                                    ⚠️ Challenging
+                                  </span>
+                                ) : (
+                                  <span className="px-4 py-2 bg-red-500/20 border border-red-500/50 text-red-400 rounded-full text-sm font-semibold">
+                                    🔥 Very Hard
+                                  </span>
+                                )
+                              ) : (
+                                <span className="px-4 py-2 bg-slate-700/20 border border-slate-700 text-slate-400 rounded-full text-sm font-semibold">
+                                  ✗ Not Possible
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Legend */}
+                    <div className="bg-white/5 border border-slate-800 rounded-lg p-4">
+                      <p className="text-sm font-semibold text-slate-300 mb-3">📊 Score Difficulty Legend:</p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full bg-[#51b206]"></span>
+                          <span className="text-slate-400">0-40%: Easy</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full bg-yellow-500"></span>
+                          <span className="text-slate-400">41-70%: Moderate</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full bg-orange-500"></span>
+                          <span className="text-slate-400">71-90%: Challenging</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="w-3 h-3 rounded-full bg-red-500"></span>
+                          <span className="text-slate-400">91-100%: Very Hard</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
               </>

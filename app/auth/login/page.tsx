@@ -31,7 +31,8 @@ export default function LoginPage() {
         password,
       })
       if (error) throw error
-      router.push("/dashboard")
+      // Redirect to dashboard and force reload to update navbar
+      window.location.href = "/dashboard"
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "An error occurred")
     } finally {
@@ -89,7 +90,8 @@ export default function LoginPage() {
                     required
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-12 text-base"
+                    className="h-12 text-base password-dots-lg"
+                    style={{ fontSize: '24px', letterSpacing: '0.5em' }}
                   />
                 </div>
 

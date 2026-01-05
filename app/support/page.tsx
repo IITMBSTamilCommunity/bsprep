@@ -1,8 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
+import { AnimatedBackground } from "@/components/animated-background"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,8 +11,13 @@ import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MessageSquare, Star, Send, MessageCircle } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function SupportPage() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
   // Contact Form State
   const [contactForm, setContactForm] = useState({
     fullName: "",
@@ -33,6 +39,13 @@ export default function SupportPage() {
   })
   const [feedbackSubmitting, setFeedbackSubmitting] = useState(false)
   const [feedbackSuccess, setFeedbackSuccess] = useState(false)
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsAuthenticated(!!data.user)
+      setLoading(false)
+    })
+  }, [])
 
   const handleContactSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,46 +151,56 @@ export default function SupportPage() {
     }
   }
 
+  if (loading) {
+    return null
+  }
+
   return (
-    <div className="min-h-screen">
-      <Navbar isAuthenticated={false} />
+    <div className="min-h-screen bg-gradient-to-b from-black via-slate-950 to-black relative">
+      <AnimatedBackground />
+      <Navbar isAuthenticated={isAuthenticated} />
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">Support Center</h1>
-            <p className="text-lg md:text-xl text-slate-400 max-w-3xl mx-auto">
-              Need help or want to share feedback? We're here to listen and assist you.
+      <section className="relative pt-32 pb-16 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#3e3098]/5 to-transparent"></div>
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl relative z-10">
+          <div className="text-center mb-12">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6">
+              <span className="bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                Support Center
+              </span>
+            </h1>
+            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+              We're here to help. Get in touch or share your feedback.
             </p>
           </div>
         </div>
       </section>
 
       {/* Forms Section */}
-      <section className="pb-20">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-7xl mx-auto">
+      <section className="pb-20 relative z-10">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             
             {/* A. CONTACT / SUPPORT FORM */}
-            <Card className="bg-black/80 backdrop-blur-sm border-0 shadow-2xl">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-[#3e3098]/20 flex items-center justify-center">
-                    <MessageSquare className="w-6 h-6 text-[#3e3098]" />
+            <Card className="bg-black/40 backdrop-blur-xl border-slate-800 hover:border-slate-700 transition-all">
+              <CardHeader className="space-y-4 pb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#3e3098] to-[#3e3098]/50 flex items-center justify-center shadow-lg shadow-[#3e3098]/20">
+                    <MessageSquare className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl">Contact BSPrep Support</CardTitle>
-                    <CardDescription className="text-base">Get help with questions or issues</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-white">Contact BSPrep Support</CardTitle>
+                    <CardDescription className="text-slate-400 text-base mt-1">Get help with questions or issues</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleContactSubmit} className="space-y-5">
+                <form onSubmit={handleContactSubmit} className="space-y-6">
                   {/* Full Name */}
                   <div className="space-y-2">
-                    <Label htmlFor="fullName" className="text-base">
-                      Full Name <span className="text-red-500">*</span>
+                    <Label htmlFor="fullName" className="text-sm font-medium text-slate-300">
+                      Full Name <span className="text-red-400">*</span>
                     </Label>
                     <Input
                       id="fullName"
@@ -185,14 +208,14 @@ export default function SupportPage() {
                       required
                       value={contactForm.fullName}
                       onChange={(e) => setContactForm({ ...contactForm, fullName: e.target.value })}
-                      className="h-12"
+                      className="h-12 bg-slate-900/50 border-slate-700 focus:border-[#3e3098] focus:ring-[#3e3098] text-white placeholder:text-slate-500"
                     />
                   </div>
 
                   {/* Email Address */}
                   <div className="space-y-2">
-                    <Label htmlFor="contactEmail" className="text-base">
-                      Email Address <span className="text-red-500">*</span>
+                    <Label htmlFor="contactEmail" className="text-sm font-medium text-slate-300">
+                      Email Address <span className="text-red-400">*</span>
                     </Label>
                     <Input
                       id="contactEmail"
@@ -201,37 +224,37 @@ export default function SupportPage() {
                       required
                       value={contactForm.email}
                       onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                      className="h-12"
+                      className="h-12 bg-slate-900/50 border-slate-700 focus:border-[#3e3098] focus:ring-[#3e3098] text-white placeholder:text-slate-500"
                     />
                   </div>
 
                   {/* Subject */}
                   <div className="space-y-2">
-                    <Label htmlFor="subject" className="text-base">
-                      Subject <span className="text-red-500">*</span>
+                    <Label htmlFor="subject" className="text-sm font-medium text-slate-300">
+                      Subject <span className="text-red-400">*</span>
                     </Label>
                     <Select 
                       value={contactForm.subject} 
                       onValueChange={(value) => setContactForm({ ...contactForm, subject: value })}
                       required
                     >
-                      <SelectTrigger className="h-12">
+                      <SelectTrigger className="h-12 bg-slate-900/50 border-slate-700 focus:border-[#3e3098] focus:ring-[#3e3098] text-white">
                         <SelectValue placeholder="Select a subject" />
                       </SelectTrigger>
-                      <SelectContent className="bg-black border-slate-700">
-                        <SelectItem value="General Question">General Question</SelectItem>
-                        <SelectItem value="Technical Issue">Technical Issue</SelectItem>
-                        <SelectItem value="Content Issue">Content Issue</SelectItem>
-                        <SelectItem value="Account Problem">Account Problem</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
+                      <SelectContent className="bg-slate-900 border-slate-700">
+                        <SelectItem value="General Question" className="text-white hover:bg-slate-800">General Question</SelectItem>
+                        <SelectItem value="Technical Issue" className="text-white hover:bg-slate-800">Technical Issue</SelectItem>
+                        <SelectItem value="Content Issue" className="text-white hover:bg-slate-800">Content Issue</SelectItem>
+                        <SelectItem value="Account Problem" className="text-white hover:bg-slate-800">Account Problem</SelectItem>
+                        <SelectItem value="Other" className="text-white hover:bg-slate-800">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   {/* Message */}
                   <div className="space-y-2">
-                    <Label htmlFor="contactMessage" className="text-base">
-                      Message <span className="text-red-500">*</span>
+                    <Label htmlFor="contactMessage" className="text-sm font-medium text-slate-300">
+                      Message <span className="text-red-400">*</span>
                     </Label>
                     <Textarea
                       id="contactMessage"
@@ -239,21 +262,21 @@ export default function SupportPage() {
                       required
                       value={contactForm.message}
                       onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                      className="min-h-[150px] resize-none"
+                      className="min-h-[140px] resize-none bg-slate-900/50 border-slate-700 focus:border-[#3e3098] focus:ring-[#3e3098] text-white placeholder:text-slate-500"
                     />
                   </div>
 
                   {/* Success Message */}
                   {contactSuccess && (
-                    <div className="p-4 bg-green-500/10 border border-green-500/50 rounded-lg text-green-400">
-                      Message sent successfully! We'll get back to you soon.
+                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm">
+                      ✓ Message sent successfully! We'll get back to you soon.
                     </div>
                   )}
 
                   {/* Submit Button */}
                   <Button
                     type="submit"
-                    className="w-full h-12 text-base font-semibold bg-[#3e3098] hover:bg-[#3e3098]/90 text-white rounded-full"
+                    className="w-full h-12 text-base font-semibold bg-gradient-to-r from-[#3e3098] to-[#3e3098]/80 hover:from-[#3e3098]/90 hover:to-[#3e3098]/70 text-white rounded-xl shadow-lg shadow-[#3e3098]/20 transition-all"
                     disabled={contactSubmitting}
                   >
                     {contactSubmitting ? (
@@ -270,38 +293,38 @@ export default function SupportPage() {
             </Card>
 
             {/* B. FEEDBACK FORM */}
-            <Card className="bg-black/80 backdrop-blur-sm border-0 shadow-2xl">
-              <CardHeader>
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-[#51b206]/20 flex items-center justify-center">
-                    <MessageCircle className="w-6 h-6 text-[#51b206]" />
+            <Card className="bg-black/40 backdrop-blur-xl border-slate-800 hover:border-slate-700 transition-all">
+              <CardHeader className="space-y-4 pb-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#51b206] to-[#51b206]/50 flex items-center justify-center shadow-lg shadow-[#51b206]/20">
+                    <MessageCircle className="w-7 h-7 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-2xl">Help Us Improve BSPrep</CardTitle>
-                    <CardDescription className="text-base">Share your feedback and suggestions</CardDescription>
+                    <CardTitle className="text-2xl font-bold text-white">Help Us Improve BSPrep</CardTitle>
+                    <CardDescription className="text-slate-400 text-base mt-1">Share your feedback and suggestions</CardDescription>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleFeedbackSubmit} className="space-y-5">
+                <form onSubmit={handleFeedbackSubmit} className="space-y-6">
                   {/* Name (Optional) */}
                   <div className="space-y-2">
-                    <Label htmlFor="feedbackName" className="text-base">
-                      Name <span className="text-slate-500">(optional)</span>
+                    <Label htmlFor="feedbackName" className="text-sm font-medium text-slate-300">
+                      Name <span className="text-slate-500 text-xs">(optional)</span>
                     </Label>
                     <Input
                       id="feedbackName"
                       placeholder="Your name"
                       value={feedbackForm.name}
                       onChange={(e) => setFeedbackForm({ ...feedbackForm, name: e.target.value })}
-                      className="h-12"
+                      className="h-12 bg-slate-900/50 border-slate-700 focus:border-[#51b206] focus:ring-[#51b206] text-white placeholder:text-slate-500"
                     />
                   </div>
 
                   {/* Email (Optional) */}
                   <div className="space-y-2">
-                    <Label htmlFor="feedbackEmail" className="text-base">
-                      Email <span className="text-slate-500">(optional)</span>
+                    <Label htmlFor="feedbackEmail" className="text-sm font-medium text-slate-300">
+                      Email <span className="text-slate-500 text-xs">(optional)</span>
                     </Label>
                     <Input
                       id="feedbackEmail"
@@ -309,72 +332,73 @@ export default function SupportPage() {
                       placeholder="you@example.com"
                       value={feedbackForm.email}
                       onChange={(e) => setFeedbackForm({ ...feedbackForm, email: e.target.value })}
-                      className="h-12"
+                      className="h-12 bg-slate-900/50 border-slate-700 focus:border-[#51b206] focus:ring-[#51b206] text-white placeholder:text-slate-500"
                     />
                     <p className="text-xs text-slate-500">Only if you'd like us to follow up</p>
                   </div>
 
                   {/* Overall Experience Rating */}
-                  <div className="space-y-2">
-                    <Label className="text-base">
-                      Overall Experience Rating <span className="text-red-500">*</span>
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-slate-300">
+                      Overall Experience Rating <span className="text-red-400">*</span>
                     </Label>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 p-4 bg-slate-900/30 rounded-xl border border-slate-800">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <button
                           key={star}
                           type="button"
                           onClick={() => setFeedbackForm({ ...feedbackForm, rating: star })}
-                          className="transition-transform hover:scale-110"
+                          className="transition-all hover:scale-125"
                         >
                           <Star
-                            className={`w-8 h-8 ${
+                            className={`w-9 h-9 transition-all ${
                               star <= feedbackForm.rating
                                 ? "fill-yellow-400 text-yellow-400"
-                                : "text-slate-600"
+                                : "text-slate-700 hover:text-slate-600"
                             }`}
                           />
                         </button>
                       ))}
-                      <span className="ml-3 text-sm text-slate-400">
-                        {feedbackForm.rating === 0 && "Select a rating"}
-                        {feedbackForm.rating === 1 && "Very Poor"}
-                        {feedbackForm.rating === 2 && "Poor"}
-                        {feedbackForm.rating === 3 && "Average"}
-                        {feedbackForm.rating === 4 && "Good"}
-                        {feedbackForm.rating === 5 && "Excellent"}
-                      </span>
+                      {feedbackForm.rating > 0 && (
+                        <span className="ml-2 text-sm font-medium text-slate-300">
+                          {feedbackForm.rating === 1 && "Very Poor"}
+                          {feedbackForm.rating === 2 && "Poor"}
+                          {feedbackForm.rating === 3 && "Average"}
+                          {feedbackForm.rating === 4 && "Good"}
+                          {feedbackForm.rating === 5 && "Excellent"}
+                        </span>
+                      )}
                     </div>
                   </div>
 
                   {/* Feedback Category */}
                   <div className="space-y-2">
-                    <Label htmlFor="feedbackCategory" className="text-base">
-                      What are you giving feedback about? <span className="text-red-500">*</span>
+                    <Label htmlFor="feedbackCategory" className="text-sm font-medium text-slate-300">
+                      What are you giving feedback about? <span className="text-red-400">*</span>
                     </Label>
                     <Select 
                       value={feedbackForm.category} 
                       onValueChange={(value) => setFeedbackForm({ ...feedbackForm, category: value })}
                       required
                     >
-                      <SelectTrigger className="h-12">
+                      <SelectTrigger className="h-12 bg-slate-900/50 border-slate-700 focus:border-[#51b206] focus:ring-[#51b206] text-white">
                         <SelectValue placeholder="Select a category" />
                       </SelectTrigger>
-                      <SelectContent className="bg-black border-slate-700">
-                        <SelectItem value="Study Materials">Study Materials</SelectItem>
-                        <SelectItem value="Quizzes & Practice">Quizzes & Practice</SelectItem>
-                        <SelectItem value="Doubt Solving">Doubt Solving</SelectItem>
-                        <SelectItem value="Mentors">Mentors</SelectItem>
-                        <SelectItem value="Website / UI">Website / UI</SelectItem>
-                        <SelectItem value="Overall Experience">Overall Experience</SelectItem>
+                      <SelectContent className="bg-slate-900 border-slate-700">
+                        <SelectItem value="Study Materials" className="text-white hover:bg-slate-800">Study Materials</SelectItem>
+                        <SelectItem value="Quizzes & Practice" className="text-white hover:bg-slate-800">Quizzes & Practice</SelectItem>
+                        <SelectItem value="Doubt Solving" className="text-white hover:bg-slate-800">Doubt Solving</SelectItem>
+                        <SelectItem value="Mentors" className="text-white hover:bg-slate-800">Mentors</SelectItem>
+                        <SelectItem value="Website / UI" className="text-white hover:bg-slate-800">Website / UI</SelectItem>
+                        <SelectItem value="Overall Experience" className="text-white hover:bg-slate-800">Overall Experience</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   {/* Feedback Message */}
                   <div className="space-y-2">
-                    <Label htmlFor="feedbackMessage" className="text-base">
-                      Feedback Message <span className="text-red-500">*</span>
+                    <Label htmlFor="feedbackMessage" className="text-sm font-medium text-slate-300">
+                      Feedback Message <span className="text-red-400">*</span>
                     </Label>
                     <Textarea
                       id="feedbackMessage"
@@ -382,29 +406,30 @@ export default function SupportPage() {
                       required
                       value={feedbackForm.message}
                       onChange={(e) => setFeedbackForm({ ...feedbackForm, message: e.target.value })}
-                      className="min-h-[120px] resize-none"
+                      className="min-h-[120px] resize-none bg-slate-900/50 border-slate-700 focus:border-[#51b206] focus:ring-[#51b206] text-white placeholder:text-slate-500"
                     />
                   </div>
 
                   {/* Would you recommend */}
-                  <div className="space-y-2">
-                    <Label className="text-base">Would you recommend BSPrep to others?</Label>
-                    <div className="flex gap-4">
+                  <div className="space-y-3">
+                    <Label className="text-sm font-medium text-slate-300">Would you recommend BSPrep to others?</Label>
+                    <div className="grid grid-cols-3 gap-3">
                       {[
-                        { value: "Yes", label: "Yes" },
-                        { value: "Maybe", label: "Maybe" },
-                        { value: "No", label: "No" }
+                        { value: "Yes", label: "Yes", emoji: "👍" },
+                        { value: "Maybe", label: "Maybe", emoji: "🤔" },
+                        { value: "No", label: "No", emoji: "👎" }
                       ].map((option) => (
                         <button
                           key={option.value}
                           type="button"
                           onClick={() => setFeedbackForm({ ...feedbackForm, recommend: option.value })}
-                          className={`flex-1 h-11 rounded-full border-2 transition-all ${
+                          className={`h-12 rounded-xl font-medium transition-all ${
                             feedbackForm.recommend === option.value
-                              ? "border-[#51b206] bg-[#51b206]/20 text-[#51b206]"
-                              : "border-slate-600 hover:border-slate-500"
+                              ? "bg-[#51b206] text-white shadow-lg shadow-[#51b206]/20"
+                              : "bg-slate-900/50 text-slate-400 border border-slate-700 hover:border-slate-600"
                           }`}
                         >
+                          <span className="mr-2">{option.emoji}</span>
                           {option.label}
                         </button>
                       ))}
@@ -413,15 +438,15 @@ export default function SupportPage() {
 
                   {/* Success Message */}
                   {feedbackSuccess && (
-                    <div className="p-4 bg-green-500/10 border border-green-500/50 rounded-lg text-green-400">
-                      Thank you for your feedback! It helps us improve.
+                    <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm">
+                      ✓ Thank you for your feedback! It helps us improve.
                     </div>
                   )}
 
                   {/* Submit Button */}
                   <Button
                     type="submit"
-                    className="w-full h-12 text-base font-semibold bg-[#51b206] hover:bg-[#51b206]/90 text-white rounded-full"
+                    className="w-full h-12 text-base font-semibold bg-gradient-to-r from-[#51b206] to-[#51b206]/80 hover:from-[#51b206]/90 hover:to-[#51b206]/70 text-white rounded-xl shadow-lg shadow-[#51b206]/20 transition-all"
                     disabled={feedbackSubmitting || feedbackForm.rating === 0}
                   >
                     {feedbackSubmitting ? (

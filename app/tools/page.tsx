@@ -1,12 +1,25 @@
 "use client"
 
 import Link from "next/link"
+import { useState, useEffect } from "react"
 import { Navbar } from "@/components/navbar"
 import { Footer } from "@/components/footer"
 import { Card, CardContent } from "@/components/ui/card"
 import { Calculator, TrendingUp } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 export default function Tools() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const supabase = createClient()
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setIsAuthenticated(!!data.user)
+      setLoading(false)
+    })
+  }, [])
+
   const tools = [
     {
       title: "GPA Calculator",
@@ -22,9 +35,13 @@ export default function Tools() {
     }
   ]
 
+  if (loading) {
+    return null
+  }
+
   return (
     <div className="min-h-screen">
-      <Navbar isAuthenticated={false} />
+      <Navbar isAuthenticated={isAuthenticated} />
 
       {/* Hero Section */}
       <section className="relative pt-32 pb-20">

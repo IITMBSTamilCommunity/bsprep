@@ -1,270 +1,150 @@
 "use client"
 
 import { createClient } from "@/lib/supabase/client"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { useEffect, useState } from "react"
-import { BarChart, Users, UserPlus, UserCheck, FileText, Phone, TrendingUp, Calendar } from "lucide-react"
-
-interface DashboardStats {
-  totalEmployees: number
-  newEmployees: number
-  resignedEmployees: number
-  jobApplicants: number
-  vacanciesChange: string
-  candidatesChange: string
-}
+import { Card } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import Link from "next/link"
+import { BookOpen, Trophy, Users, TrendingUp } from "lucide-react"
 
 export default function StudentDashboard() {
-  const [stats, setStats] = useState<DashboardStats>({
-    totalEmployees: 418,
-    newEmployees: 21,
-    resignedEmployees: 14,
-    jobApplicants: 261,
-    vacanciesChange: "+7%",
-    candidatesChange: "+4%",
-  })
-  const [userName, setUserName] = useState("Maria")
+  const [userName, setUserName] = useState("")
+  const [enrolledCoursesCount, setEnrolledCoursesCount] = useState(0)
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser()
+        const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           setUserName(user.email?.split("@")[0] || "Student")
+          
+          // Get enrolled courses count
+          const { data: enrollments } = await supabase
+            .from('enrollments')
+            .select('id')
+            .eq('user_id', user.id)
+          
+          setEnrolledCoursesCount(enrollments?.length || 0)
         }
       } catch (error) {
         console.error("Error fetching user:", error)
+      } finally {
+        setLoading(false)
       }
     }
 
     fetchUserData()
   }, [])
 
-  const countries = [
-    { name: "United States", percentage: 78, flag: "🇺🇸" },
-    { name: "France", percentage: 43, flag: "🇫🇷" },
-    { name: "Japan", percentage: 38, flag: "🇯🇵" },
-    { name: "Sweden", percentage: 24, flag: "🇸🇪" },
-    { name: "Spain", percentage: 16, flag: "🇪🇸" },
-  ]
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#3e3098]"></div>
+      </div>
+    )
+  }
 
   return (
-    <div className="min-h-screen p-4 md:p-8">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-              Good morning, <span className="text-primary">{userName}</span>
-            </h1>
-            <p className="text-muted-foreground text-sm mt-1">long time no see</p>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm">
-              Schedule
-            </Button>
-            <Button size="sm">
-              Analytics
-            </Button>
-            <Button variant="outline" size="sm">
-              Candidates
-            </Button>
-            <Button variant="outline" size="sm">
-              KPI
-            </Button>
-            <Button variant="outline" size="sm">
-              Leads
-            </Button>
-          </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <Users className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <CardDescription className="text-sm">Total employees</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold">{stats.totalEmployees}</h3>
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">{stats.vacanciesChange} last month</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <UserPlus className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <CardDescription className="text-sm">New employees</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold">{stats.newEmployees}</h3>
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">{stats.vacanciesChange} last month</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <UserCheck className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <CardDescription className="text-sm">Resigned employees</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold">{stats.resignedEmployees}</h3>
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">{stats.candidatesChange} last month</span>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border shadow-sm hover:shadow-md transition-shadow">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <FileText className="w-5 h-5 text-muted-foreground" />
-              </div>
-              <CardDescription className="text-sm">Job applicants</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-baseline gap-2">
-                <h3 className="text-3xl font-bold">{stats.jobApplicants}</h3>
-                <span className="text-sm font-medium text-green-600 dark:text-green-400">+12% last month</span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Lower Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Upcoming Interview */}
-          <Card className="border shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg font-semibold">Upcoming Interview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                  <span className="text-xl">👤</span>
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Front-End Developer</p>
-                  <p className="text-sm text-muted-foreground">Jordan Maxcon</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">Time</p>
-                  <p className="text-sm text-muted-foreground">11:30 AM - 12:45 AM</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge>PayPal</Badge>
-                  <Button size="sm" className="rounded-full w-10 h-10 p-0">
-                    <Phone className="w-4 h-4" />
-                  </Button>
-                  <Button variant="ghost" size="sm">
-                    View details
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Vacancy Trends Chart */}
-          <Card className="border shadow-sm lg:col-span-2">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-lg font-semibold">Vacancy Trends</CardTitle>
-                <div className="flex gap-4 text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-primary"></div>
-                    <span className="text-muted-foreground">vacancies</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
-                    <span className="text-muted-foreground">candidates</span>
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-48 relative">
-                {/* Simple chart representation */}
-                <div className="absolute inset-0 flex items-end justify-between px-4 pb-4">
-                  {Array.from({ length: 12 }).map((_, i) => (
-                    <div key={i} className="flex flex-col items-center gap-1 flex-1">
-                      <div className="w-full max-w-[20px] space-y-1">
-                        <div
-                          className="w-full bg-primary rounded-t"
-                          style={{ height: `${Math.random() * 80 + 40}px` }}
-                        ></div>
-                        <div
-                          className="w-full bg-red-400 rounded-t"
-                          style={{ height: `${Math.random() * 60 + 30}px` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {/* Highlight marker */}
-                <div className="absolute left-1/2 top-8 bg-primary text-primary-foreground text-xs px-2 py-1 rounded">
-                  65.03
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Countries Insight */}
-        <Card className="border shadow-sm">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Countries Insight</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {countries.map((country, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <span className="text-2xl">{country.flag}</span>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-sm font-medium">{country.name}</span>
-                      <span className="text-sm font-semibold">{country.percentage}%</span>
-                    </div>
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary rounded-full transition-all"
-                        style={{ width: `${country.percentage}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+    <div className="space-y-8">
+      {/* Welcome Section */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-green-400 bg-clip-text text-transparent mb-2">
+          Welcome back, {userName}!
+        </h1>
+        <p className="text-slate-400 text-lg">
+          Continue your learning journey with IITM BS courses
+        </p>
       </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="p-6 bg-gradient-to-br from-purple-900/20 to-purple-800/10 border border-purple-800/30 rounded-lg hover:border-purple-700/50 transition-all backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-purple-600 to-purple-700 rounded-lg">
+              <BookOpen className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-400">Enrolled Courses</p>
+              <p className="text-3xl font-bold text-white">{enrolledCoursesCount}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 bg-gradient-to-br from-green-900/20 to-green-800/10 border border-green-800/30 rounded-lg hover:border-green-700/50 transition-all backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-green-600 to-green-700 rounded-lg">
+              <Trophy className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-400">Completed</p>
+              <p className="text-3xl font-bold text-white">0</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="p-6 bg-gradient-to-br from-blue-900/20 to-blue-800/10 border border-blue-800/30 rounded-lg hover:border-blue-700/50 transition-all backdrop-blur-sm">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <p className="text-sm text-slate-400">Progress</p>
+              <p className="text-3xl font-bold text-white">
+                {enrolledCoursesCount > 0 ? '25%' : '0%'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-6">Quick Actions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Link href="/dashboard/courses">
+            <div className="p-6 bg-gradient-to-br from-purple-900/30 to-purple-800/20 border border-purple-800/40 rounded-lg hover:border-purple-600 hover:shadow-lg hover:shadow-purple-900/30 transition-all cursor-pointer group">
+              <BookOpen className="w-10 h-10 text-purple-400 mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="font-semibold text-white text-lg mb-2">My Courses</h3>
+              <p className="text-sm text-slate-400">View and continue your enrolled courses</p>
+            </div>
+          </Link>
+
+          <Link href="/dashboard/courses">
+            <div className="p-6 bg-gradient-to-br from-green-900/30 to-green-800/20 border border-green-800/40 rounded-lg hover:border-green-600 hover:shadow-lg hover:shadow-green-900/30 transition-all cursor-pointer group">
+              <Users className="w-10 h-10 text-green-400 mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="font-semibold text-white text-lg mb-2">Explore Courses</h3>
+              <p className="text-sm text-slate-400">Discover new courses to enroll in</p>
+            </div>
+          </Link>
+
+          <Link href="/dashboard/profile">
+            <div className="p-6 bg-gradient-to-br from-blue-900/30 to-blue-800/20 border border-blue-800/40 rounded-lg hover:border-blue-600 hover:shadow-lg hover:shadow-blue-900/30 transition-all cursor-pointer group">
+              <Users className="w-10 h-10 text-blue-400 mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="font-semibold text-white text-lg mb-2">My Profile</h3>
+              <p className="text-sm text-slate-400">Update your profile and settings</p>
+            </div>
+          </Link>
+        </div>
+      </div>
+
+      {/* Welcome Message for New Users */}
+      {enrolledCoursesCount === 0 && (
+        <div className="p-8 bg-gradient-to-br from-purple-900/40 via-purple-800/20 to-green-900/40 border border-purple-700/50 rounded-lg backdrop-blur-sm">
+          <h2 className="text-3xl font-bold text-white mb-3">
+            🎉 Welcome to BSPrep!
+          </h2>
+          <p className="text-slate-300 mb-6 text-lg">
+            Start your IITM BS journey by exploring our courses. Enroll in free qualifier courses or upgrade to foundation level courses.
+          </p>
+          <Link href="/dashboard/courses">
+            <Button className="bg-gradient-to-r from-purple-600 to-green-600 hover:from-purple-500 hover:to-green-500 text-white px-6 py-3 text-base shadow-lg shadow-purple-900/50">
+              Browse Courses
+            </Button>
+          </Link>
+        </div>
+      )}
     </div>
   )
 }
-          setStats({ totalCourses: 3, inProgress: 2, completed: 1, hoursLearned: 52 })
-        }
-      } catch (error) {
-        console.error("Error fetching enrollments:", error)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    fetchEnrollments()
-  }, [])
-
-  return (

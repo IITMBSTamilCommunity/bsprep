@@ -22,6 +22,7 @@ interface NavbarProps {
 export function Navbar({ isAuthenticated = false, userRole = "student" }: NavbarProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [profilePhoto, setProfilePhoto] = useState<string>('')
   const [scrolled, setScrolled] = useState(false)
   const router = useRouter()
   const supabase = createClient()
@@ -35,6 +36,34 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
   useEffect(() => {
     if (isAuthenticated) {
       supabase.auth.getUser().then(({ data }) => setUser(data.user))
+      fetchProfilePhoto()
+    }
+  }, [isAuthenticated])
+
+  const fetchProfilePhoto = async () => {
+    try {
+      const response = await fetch('/api/profile')
+      if (response.ok) {
+        const { profile } = await response.json()
+        if (profile?.photo_url) {
+          setProfilePhoto(profile.photo_url)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching profile photo:', error)
+    }
+  }
+
+  // Poll for profile photo updates every 5 seconds when on profile page
+  useEffect(() => {
+    if (isAuthenticated && typeof window !== 'undefined') {
+      const interval = setInterval(() => {
+        if (window.location.pathname === '/dashboard/profile') {
+          fetchProfilePhoto()
+        }
+      }, 2000)
+      
+      return () => clearInterval(interval)
     }
   }, [isAuthenticated])
 
@@ -52,7 +81,7 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 flex-shrink-0 group">
+          <Link href={isAuthenticated ? "/dashboard" : "/"} className="flex items-center gap-3 flex-shrink-0 group">
             <img 
               src="/logo.jpeg" 
               alt="IITM BS Logo" 
@@ -69,11 +98,20 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
               <Link href="/" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Home
               </Link>
-              <Link href="/about" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
-                About
+              <Link href="/courses" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Courses
+              </Link>
+              <Link href="/quiz-prep" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Quiz Prep
+              </Link>
+              <Link href="/resources" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Resources
               </Link>
               <Link href="/tools" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Tools
+              </Link>
+              <Link href="/about" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Contributors
               </Link>
               <Link href="/support" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Support
@@ -86,23 +124,23 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
               <Link href="/dashboard" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Dashboard
               </Link>
-              <Link href="/dashboard" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
-                Study
+              <Link href="/dashboard/courses" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Courses
               </Link>
-              <Link
-                href="/dashboard/quizzes"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                Practice
+              <Link href="/quiz-prep" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Quiz Prep
               </Link>
-              <Link href="#" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
-                Doubts
+              <Link href="/compiler" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Compiler
               </Link>
-              <Link
-                href="/dashboard/leaderboard"
-                className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors"
-              >
-                Leaderboard
+              <Link href="/resources" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Resources
+              </Link>
+              <Link href="/tools" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Tools
+              </Link>
+              <Link href="/support" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Support
               </Link>
             </div>
           )}
@@ -118,8 +156,14 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button className="flex items-center justify-center w-9 h-9 rounded-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-80 transition-opacity">
-                      <User className="w-5 h-5" />
+                    <button className="flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-[#3e3098] via-purple-600 to-green-500 p-[2px] hover:opacity-80 transition-opacity">
+                      <div className="w-full h-full rounded-full bg-slate-50 dark:bg-slate-950 flex items-center justify-center overflow-hidden">
+                        {profilePhoto ? (
+                          <img src={profilePhoto} alt="Profile" className="w-full h-full object-cover" />
+                        ) : (
+                          <User className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                        )}
+                      </div>
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
@@ -127,10 +171,9 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
                       <Link href="/dashboard/profile" className="cursor-pointer">
-                        My Profile
+                        Profile
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>Settings</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-red-600 cursor-pointer" onClick={handleLogout}>
                       Logout
@@ -169,10 +212,22 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                   Home
                 </Link>
                 <Link
-                  href="/about"
+                  href="/courses"
                   className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all"
                 >
-                  About
+                  Courses
+                </Link>
+                <Link
+                  href="/quiz-prep"
+                  className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all"
+                >
+                  Quiz Prep
+                </Link>
+                <Link
+                  href="/resources"
+                  className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all"
+                >
+                  Resources
                 </Link>
                 <Link
                   href="/tools"
@@ -181,10 +236,45 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                   Tools
                 </Link>
                 <Link
+                  href="/about"
+                  className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all"
+                >
+                  Contributors
+                </Link>
+                <Link
                   href="/support"
                   className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all"
                 >
                   Support
+                </Link>
+              </>
+            )}
+
+            {isAuthenticated && (
+              <>
+                <Link href="/dashboard" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  Dashboard
+                </Link>
+                <Link href="/dashboard/courses" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  Courses
+                </Link>
+                <Link href="/quiz-prep" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  Quiz Prep
+                </Link>
+                <Link href="/compiler" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  Compiler
+                </Link>
+                <Link href="/resources" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  Resources
+                </Link>
+                <Link href="/tools" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  Tools
+                </Link>
+                <Link href="/support" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  Support
+                </Link>
+                <Link href="/dashboard/profile" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  Profile
                 </Link>
               </>
             )}

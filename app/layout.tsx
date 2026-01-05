@@ -4,6 +4,7 @@ import { Urbanist } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/theme-provider"
 import { BeamsBackground } from "@/components/beams-background"
+import { LoadingProvider } from "@/components/loading-provider"
 import "./globals.css"
 
 const urbanist = Urbanist({ 
@@ -33,7 +34,9 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           <BeamsBackground />
           <div className="relative z-10">
-            {children}
+            <LoadingProvider>
+              {children}
+            </LoadingProvider>
           </div>
         </ThemeProvider>
         <Analytics />
