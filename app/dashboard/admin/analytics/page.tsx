@@ -1,6 +1,5 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts"
@@ -10,12 +9,12 @@ export default function AdminAnalyticsPage() {
     totalUsers: 0,
     totalStudents: 0,
     totalMentors: 0,
+    totalAdmins: 0,
     totalCourses: 0,
     totalEnrollments: 0,
   })
   const [roleData, setRoleData] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
 
   useEffect(() => {
     fetchAnalytics()
@@ -23,29 +22,25 @@ export default function AdminAnalyticsPage() {
 
   const fetchAnalytics = async () => {
     try {
-      // Fetch user statistics
-      const { data: profiles } = await supabase.from("profiles").select("role")
-      const { data: courses } = await supabase.from("courses").select("id")
-      const { data: enrollments } = await supabase.from("enrollments").select("id")
+      const res = await fetch('/api/admin/analytics')
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Failed to fetch analytics')
 
-      if (profiles) {
-        const students = profiles.filter((p) => p.role === "student").length
-        const mentors = profiles.filter((p) => p.role === "mentor").length
+      const s = json.stats || {}
+      setStats({
+        totalUsers: s.totalUsers || 0,
+        totalStudents: s.totalStudents || 0,
+        totalMentors: s.totalMentors || 0,
+        totalAdmins: s.totalAdmins || 0,
+        totalCourses: s.totalCourses || 0,
+        totalEnrollments: s.totalEnrollments || 0,
+      })
 
-        setStats({
-          totalUsers: profiles.length,
-          totalStudents: students,
-          totalMentors: mentors,
-          totalCourses: courses?.length || 0,
-          totalEnrollments: enrollments?.length || 0,
-        })
-
-        setRoleData([
-          { name: "Students", value: students },
-          { name: "Mentors", value: mentors },
-          { name: "Admins", value: profiles.filter((p) => p.role === "admin").length },
-        ])
-      }
+      setRoleData([
+        { name: "Students", value: s.totalStudents || 0 },
+        { name: "Mentors", value: s.totalMentors || 0 },
+        { name: "Admins", value: s.totalAdmins || 0 },
+      ])
     } catch (error) {
       console.error("Error fetching analytics:", error)
     } finally {

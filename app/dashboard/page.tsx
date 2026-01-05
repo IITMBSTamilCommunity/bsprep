@@ -10,6 +10,9 @@ import { BookOpen, Trophy, Users, TrendingUp } from "lucide-react"
 export default function StudentDashboard() {
   const [userName, setUserName] = useState("")
   const [enrolledCoursesCount, setEnrolledCoursesCount] = useState(0)
+  const [profile, setProfile] = useState<any>(null)
+  const [notificationsCount, setNotificationsCount] = useState(0)
+  const [recentCourses, setRecentCourses] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
@@ -19,14 +22,43 @@ export default function StudentDashboard() {
         const { data: { user } } = await supabase.auth.getUser()
         if (user) {
           setUserName(user.email?.split("@")[0] || "Student")
-          
-          // Get enrolled courses count
+
+          // load profile via server API (includes photo_url, is_premium etc)
+          try {
+            const p = await (await fetch('/api/profile')).json()
+            if (p.profile) setProfile(p.profile)
+          } catch (err) {
+            console.error('Failed to load profile', err)
+          }
+
+          // Get enrolled courses and preview
           const { data: enrollments } = await supabase
             .from('enrollments')
-            .select('id')
+            .select('id,course_id,created_at')
             .eq('user_id', user.id)
-          
+            .order('created_at', { ascending: false })
+
           setEnrolledCoursesCount(enrollments?.length || 0)
+
+          // Fetch course details for up to 3 recent enrollments
+          if (enrollments && enrollments.length > 0) {
+            const courseIds = enrollments.slice(0, 3).map((e: any) => e.course_id)
+            if (courseIds.length) {
+              const { data: courses } = await supabase
+                .from('courses')
+                .select('id,title')
+                .in('id', courseIds)
+              setRecentCourses((courses || []).map((c: any) => ({ id: c.id, title: c.title })))
+            }
+          }
+
+          // notifications count
+          try {
+            const n = await (await fetch('/api/notifications')).json()
+            setNotificationsCount((n.notifications || []).filter((x: any) => !x.read).length)
+          } catch (err) {
+            console.error('Failed to load notifications', err)
+          }
         }
       } catch (error) {
         console.error("Error fetching user:", error)
@@ -50,12 +82,26 @@ export default function StudentDashboard() {
     <div className="space-y-8">
       {/* Welcome Section */}
       <div className="mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-green-400 bg-clip-text text-transparent mb-2">
-          Welcome back, {userName}!
-        </h1>
-        <p className="text-slate-400 text-lg">
-          Continue your learning journey with IITM BS courses
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-400 to-green-400 bg-clip-text text-transparent mb-2">
+              Welcome back, {profile?.full_name || userName}!
+            </h1>
+            <p className="text-slate-400 text-lg">Continue your learning journey with IITM BS courses</p>
+          </div>
+          <div className="flex items-center gap-4">
+            {profile?.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={profile.photo_url} alt="avatar" className="w-14 h-14 rounded-full object-cover" />
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-gray-800 flex items-center justify-center text-slate-400">U</div>
+            )}
+            <div className="text-right">
+              <div className="text-sm text-slate-400">{profile?.username || userName}</div>
+              <div className="text-xs text-slate-300">{profile?.is_premium ? 'Premium' : 'Free'}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Quick Stats */}
@@ -127,6 +173,22 @@ export default function StudentDashboard() {
             </div>
           </Link>
         </div>
+
+        {/* Recent Courses Preview */}
+        {recentCourses.length > 0 && (
+          <div className="mt-8">
+            <h3 className="text-lg font-semibold text-white mb-2">My Recent Courses</h3>
+            <ul className="space-y-2">
+              {recentCourses.map((c) => (
+                <li key={c.id}>
+                  <Link href={`/dashboard/courses/${c.id}`} className="text-purple-400 hover:underline">
+                    {c.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {/* Welcome Message for New Users */}

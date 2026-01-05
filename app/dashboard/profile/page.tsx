@@ -25,7 +25,7 @@ import {
   Camera,
   Upload
 } from 'lucide-react'
-import ReactCrop, { type Crop, PixelCrop } from 'react-image-crop'
+import ReactCrop, { type Crop, type PixelCrop } from 'react-image-crop'
 import 'react-image-crop/dist/ReactCrop.css'
 
 interface Project {
@@ -101,7 +101,7 @@ export default function ProfilePage() {
       if (!user) return
 
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user_profiles_extended')
         .select('*')
         .eq('id', user.id)
         .single()
@@ -116,7 +116,7 @@ export default function ProfilePage() {
           portfolio: data.portfolio || '',
           github: data.github || '',
           linkedin: data.linkedin || '',
-          avatar_url: data.avatar_url || '',
+          avatar_url: data.photo_url || '',
           banner_url: data.banner_url || '',
           joined_date: data.created_at || new Date().toISOString(),
         })
@@ -163,6 +163,7 @@ export default function ProfilePage() {
         body: JSON.stringify({
           userId: user.id,
           ...profileData,
+          photo_url: profileData.avatar_url,
           projects: JSON.stringify(projects),
           experiences: JSON.stringify(experiences),
           educations: JSON.stringify(educations),
@@ -353,9 +354,9 @@ export default function ProfilePage() {
       }
 
       // Save to database immediately
-      const updateField = cropImageType === 'avatar' ? 'avatar_url' : 'banner_url'
+      const updateField = cropImageType === 'avatar' ? 'photo_url' : 'banner_url'
       const { error: updateError } = await supabase
-        .from('profiles')
+        .from('user_profiles_extended')
         .update({ [updateField]: publicUrl })
         .eq('id', user.id)
 
