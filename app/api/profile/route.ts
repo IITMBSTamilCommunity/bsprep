@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { photo_url, github, linkedin, portfolio, about, education } = body
+    const { photo_url, banner_url, github, linkedin, portfolio, about, education, location, username, full_name, email, projects, experiences, educations } = body
 
     // Upsert profile
     const { data: profile, error: upsertError } = await supabase
@@ -45,11 +45,19 @@ export async function POST(request: Request) {
       .upsert({
         id: user.id,
         photo_url,
+        banner_url,
         github,
         linkedin,
         portfolio,
         about,
         education,
+        location,
+        username,
+        full_name,
+        email,
+        projects,
+        experiences,
+        educations,
         updated_at: new Date().toISOString()
       }, {
         onConflict: 'id'
@@ -67,4 +75,9 @@ export async function POST(request: Request) {
     console.error('Profile update error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+export async function PUT(request: Request) {
+  // PUT and POST do the same thing (upsert)
+  return POST(request)
 }
