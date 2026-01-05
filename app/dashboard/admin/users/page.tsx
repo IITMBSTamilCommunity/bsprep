@@ -1,107 +1,87 @@
 "use client"
 
-import { createClient } from "@/lib/supabase/client"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { useEffect, useState } from "react"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import React, { useEffect, useState } from 'react'
+import { Navbar } from '@/components/navbar'
+import { Footer } from '@/components/footer'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-interface User {
-  id: string
-  name: string
-  email: string
-  role: string
-  created_at: string
-}
-
-export default function AdminUsersPage() {
-  const [users, setUsers] = useState<User[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const supabase = createClient()
+export default function AdminUsers() {
+  const [users, setUsers] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
 
   useEffect(() => {
     fetchUsers()
   }, [])
 
-  const fetchUsers = async () => {
+  async function fetchUsers() {
+    setLoading(true)
     try {
-      const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false })
-
-      if (data) {
-        const formattedUsers = data.map((user) => ({
-          id: user.id,
-          name: `${user.first_name} ${user.last_name}`.trim(),
-          email: user.email,
-          role: user.role || "student",
-          created_at: user.created_at,
-        }))
-        setUsers(formattedUsers)
-      }
-    } catch (error) {
-      console.error("Error fetching users:", error)
+      const res = await fetch('/api/admin/users')
+      const json = await res.json()
+      if (json.error) throw new Error(json.error)
+      setUsers(json.users || [])
+    } catch (err: any) {
+      setMessage(err.message || 'Failed to load users')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
+  async function updateRole(id: string, role: string) {
+    setLoading(true)
+    setMessage(null)
     try {
-      const { error } = await supabase.from("profiles").update({ role: newRole }).eq("id", userId)
-
-      if (error) throw error
+      const res = await fetch('/api/admin/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, role }),
+      })
+      const json = await res.json()
+      if (json.error) throw new Error(json.error)
+      setMessage('Role updated')
       fetchUsers()
-    } catch (error) {
-      console.error("Error updating user role:", error)
+    } catch (err: any) {
+      setMessage(err.message || 'Update failed')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold">User Management</h1>
-        <p className="text-muted-foreground">Manage all platform users</p>
-      </div>
+    <div className="min-h-screen">
+      <Navbar isAuthenticated={true} />
+      <div className="max-w-5xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-4">Admin — Manage Users</h1>
+        {message && <div className="p-3 bg-slate-800/30 rounded mb-4">{message}</div>}
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Total Users: {users.length}</CardTitle>
-        </CardHeader>
-      </Card>
-
-      {isLoading ? (
-        <div className="text-center py-8">Loading users...</div>
-      ) : (
         <div className="space-y-4">
-          {users.map((user) => (
-            <Card key={user.id}>
-              <CardContent className="pt-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold">{user.name}</h3>
-                    <p className="text-sm text-muted-foreground">{user.email}</p>
-                    <p className="text-xs text-muted-foreground">
-                      Joined: {new Date(user.created_at).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-4">
-                    <Select defaultValue={user.role} onValueChange={(value) => handleRoleChange(user.id, value)}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="student">Student</SelectItem>
-                        <SelectItem value="mentor">Mentor</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Badge>{user.role}</Badge>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          {users.map((u) => (
+            <div key={u.id} className="bg-white/5 p-4 rounded-lg border border-slate-200/10 flex items-center justify-between">
+              <div>
+                <div className="font-semibold">{u.full_name || u.username || u.email}</div>
+                <div className="text-sm text-slate-400">{u.email}</div>
+              </div>
+              <div className="flex items-center gap-4">
+                <Select onValueChange={(val) => updateRole(u.id, val)} value={u.role || 'user'}>
+                  <SelectTrigger className="w-36 h-10">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="user">User</SelectItem>
+                    <SelectItem value="student">Student</SelectItem>
+                    <SelectItem value="mentor">Mentor</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button variant="ghost" onClick={() => updateRole(u.id, 'admin')}>Make Admin</Button>
+              </div>
+            </div>
           ))}
         </div>
-      )}
+      </div>
+      <Footer />
     </div>
   )
 }

@@ -49,6 +49,25 @@ export default function ContributorsPage() {
         setContributors(data)
       } catch (err) {
         console.error("Error fetching contributors:", err)
+        // Fallback data
+        setContributors([
+          {
+            login: "admin",
+            id: 1,
+            avatar_url: "https://github.com/ghost.png",
+            html_url: "#",
+            contributions: 100,
+            name: "System Admin"
+          },
+          {
+            login: "developer",
+            id: 2,
+            avatar_url: "https://github.com/ghost.png",
+            html_url: "#",
+            contributions: 50,
+            name: "Lead Developer"
+          }
+        ])
         setError(true)
       } finally {
         setLoading(false)

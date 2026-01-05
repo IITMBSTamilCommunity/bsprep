@@ -28,15 +28,15 @@ export default function DashboardLayout({
       }
       setUser(user)
 
-      const { data: profile, error } = await supabase.from("profiles").select("role").eq("id", user.id).single()
+      const { data: profile, error } = await supabase.from("user_profiles_extended").select("role").eq("id", user.id).single()
 
       if (error) {
         console.error("Error fetching profile:", error)
-        // Default to student if profile not found
-        setRole("student")
+        // Default to user if profile not found
+        setRole("user")
       } else if (profile) {
         console.log("User role detected:", profile.role)
-        setRole(profile.role || "student")
+        setRole(profile.role || "user")
         
         // Redirect admin/mentor to their respective dashboards
         if (profile.role === "admin" && window.location.pathname === "/dashboard") {
@@ -45,8 +45,8 @@ export default function DashboardLayout({
           router.push("/dashboard/mentor/courses")
         }
       } else {
-        // No profile found, default to student
-        setRole("student")
+        // No profile found, default to user
+        setRole("user")
       }
     }
 
@@ -59,7 +59,7 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen">
-      <Navbar isAuthenticated={true} userRole={role || "student"} />
+      <Navbar isAuthenticated={true} userRole={role || "user"} />
       <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
         {children}
       </main>

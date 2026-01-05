@@ -40,6 +40,27 @@ export async function POST(request: Request) {
     const { photo_url, banner_url, github, linkedin, portfolio, about, education, location, username, full_name, email, projects, experiences, educations } = body
 
     // Upsert profile
+    // Validate uploaded image URLs belong to the authenticated user (simple check).
+    // Expected public URL format: <SUPABASE_URL>/storage/v1/object/public/profiles/<key>
+    const invalidUpload = (url?: string) => {
+      if (!url) return false
+      try {
+        const parsed = new URL(url)
+        const base = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+        if (!parsed.href.startsWith((base || '').replace(/\/$/, '') + '/storage/v1/object/public/profiles/')) return true
+        // ensure filename contains user id to reduce spoofing (we use <kind>/<userId>-timestamp.ext)
+        const key = parsed.pathname.split('/storage/v1/object/public/profiles/')[1] || ''
+        if (!key.includes(user.id)) return true
+        return false
+      } catch {
+        return true
+      }
+    }
+
+    if (invalidUpload(photo_url) || invalidUpload(banner_url)) {
+      return NextResponse.json({ error: 'Invalid uploaded image URL' }, { status: 400 })
+    }
+
     const { data: profile, error: upsertError } = await supabase
       .from('user_profiles_extended')
       .upsert({

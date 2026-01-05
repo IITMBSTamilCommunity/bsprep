@@ -23,6 +23,7 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
   const [isOpen, setIsOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [profilePhoto, setProfilePhoto] = useState<string>('')
+  const [userRoleState, setUserRoleState] = useState<string | null>(null)
   const [scrolled, setScrolled] = useState(false)
   const router = useRouter()
   const supabase = createClient()
@@ -47,6 +48,9 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
         const { profile } = await response.json()
         if (profile?.photo_url) {
           setProfilePhoto(profile.photo_url)
+        }
+        if (profile?.role) {
+          setUserRoleState(profile.role)
         }
       }
     } catch (error) {
@@ -124,8 +128,14 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
               <Link href="/dashboard" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Dashboard
               </Link>
+              <Link href="/dashboard/notes" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Notes
+              </Link>
               <Link href="/dashboard/courses" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Courses
+              </Link>
+              <Link href="/dashboard/scholarships" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
+                Scholarships
               </Link>
               <Link href="/quiz-prep" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Quiz Prep
@@ -142,6 +152,11 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
               <Link href="/support" className="text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-colors">
                 Support
               </Link>
+              {userRoleState === 'admin' && (
+                <Link href="/dashboard/admin/notes" className="text-sm font-medium text-red-600 hover:underline">
+                  Admin
+                </Link>
+              )}
             </div>
           )}
 
@@ -257,6 +272,9 @@ export function Navbar({ isAuthenticated = false, userRole = "student" }: Navbar
                 </Link>
                 <Link href="/dashboard/courses" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
                   Courses
+                </Link>
+                <Link href="/dashboard/scholarships" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
+                  Scholarships
                 </Link>
                 <Link href="/quiz-prep" className="block px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-all">
                   Quiz Prep
